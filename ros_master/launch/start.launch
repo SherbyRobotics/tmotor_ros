@@ -1,0 +1,10 @@
+<launch>
+
+  <node pkg="joy" type="joy_node" name="joy" >
+    <param name="deadzone" value="0.0" />
+  </node>
+
+  <node pkg="python_controller" type="high_level_controller.py" name="controller">
+  </node>
+
+</launch>
