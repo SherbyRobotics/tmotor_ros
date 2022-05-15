@@ -4,7 +4,7 @@
     <param name="deadzone" value="0.0" />
   </node>
 
-  <node pkg="tmotor_controller" type="robot_controller.py" name="controller">
+  <node pkg="tmotor_controller" type="basic_robot_controller.py" name="controller">
   </node>
 
   <node pkg="tmotor_ros_driver" type="tmotor_ros.py" name="tmotors">
