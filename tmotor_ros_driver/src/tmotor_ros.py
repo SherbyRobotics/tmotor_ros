@@ -24,18 +24,20 @@ class tmotor_driver(object):
         # Paramters
         #################
         
+        self.offline_debug = True
+        
 
         #################
         # Memory
         #################
         
-        # cmd
+        # cmd for tmotors
         self.motors_cmd_mode = ['Disable','Disable']
         self.motors_cmd_pos  = [ 0.0 , 0.0 ]
         self.motors_cmd_vel  = [ 0.0 , 0.0 ]
         self.motors_cmd_tor  = [ 0.0 , 0.0 ]
         
-        # sensor
+        # sensor feedback
         self.motors_names       = ['Joint 0','Joint 1']
         self.motors_sensor_pos  = [ 0.0 , 0.0 ]
         self.motors_sensor_vel  = [ 0.0 , 0.0 ]
@@ -58,14 +60,43 @@ class tmotor_driver(object):
     ##########################################################################################
     def send_cmd_to_tmotors(self):
         """ """
-        #TODO
         
-        # Send commonds to both motor and read sensor data
+        if self.offline_debug:
+            
+            # Kinematic model for debug
+            dt = 0.02
+            
+            for i in range(2):
+                
+                #################################################
+                if self.motors_cmd_mode[i] == 'position':
+                    
+                    self.motors_sensor_pos[i] = self.motors_cmd_pos[i]
+                    
+                #################################################  
+                elif self.motors_cmd_mode[i] == 'velocity':
+                    
+                    self.motors_sensor_vel[i] = self.motors_cmd_vel[i]
+                    self.motors_sensor_pos[i] = self.motors_sensor_pos[i] + self.motors_cmd_vel[i] * dt
+                    
+                #################################################   
+                elif self.motors_cmd_mode[i] == 'torque':
+                    
+                    self.motors_sensor_tor[i] = self.motors_cmd_tor[i]
+                    self.motors_sensor_vel[i] = self.motors_sensor_vel[i] + self.motors_cmd_tor[i] * dt
+                    self.motors_sensor_pos[i] = self.motors_sensor_pos[i] + self.motors_sensor_vel[i] * dt
+                    
         
-        #Place holder for sensor feedback
-        self.motors_sensor_pos  = [ 0.0 , 0.0 ]
-        self.motors_sensor_vel  = [ 0.0 , 0.0 ]
-        self.motors_sensor_tor  = [ 0.0 , 0.0 ]
+        else:
+            #TODO
+            # Send commonds to both motor and read sensor data
+            
+            #Place holder for sensor feedback
+            self.motors_sensor_pos  = [ 0.0 , 0.0 ]
+            self.motors_sensor_vel  = [ 0.0 , 0.0 ]
+            self.motors_sensor_tor  = [ 0.0 , 0.0 ]
+        
+        
         
         self.publish_sensor_data()
 

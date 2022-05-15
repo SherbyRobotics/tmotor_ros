@@ -6,7 +6,7 @@ from sensor_msgs.msg import JointState
 
 
 #########################################
-class python_controller(object):
+class robot_controller(object):
 
     #######################################    
     def __init__(self):
@@ -33,7 +33,7 @@ class python_controller(object):
         #################
         
         # References Inputs
-        self.user_ref        = 0
+        self.user_ref        = [ 0.0 , 0.0 ]
         self.controller_mode = 0  # Control mode of this controller node
         
         # Ouput commands
@@ -43,7 +43,7 @@ class python_controller(object):
         self.motors_cmd_tor  = [ 0.0 , 0.0 ]
         
         # Sensings inputs
-        self.x = np.array([0,0,0,0])
+        self.x = np.array([ 0.0, 0.0, 0.0, 0.0]) # State of the system
 
         
     #######################################
@@ -62,35 +62,64 @@ class python_controller(object):
             # Controllers HERE            
             ##########################
             if  ( self.controller_mode == 1 ):
-                pass
+                """ position control """
+                
+                self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415
+                self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415
+                
+                self.motors_cmd_mode = ['position','position']
             
             elif ( self.controller_mode == 2 ):
-                pass 
+                """ velocity control """
+                
+                self.motors_cmd_vel[0] = self.user_ref[0] * 3.1415 * 2
+                self.motors_cmd_vel[1] = self.user_ref[1] * 3.1415 * 2
+                
+                self.motors_cmd_mode = ['velocity','velocity']
                 
             elif ( self.controller_mode == 3 ):
-                pass
+                """ torque control """
+                
+                self.motors_cmd_tor[0] = self.user_ref[0] * 1.0
+                self.motors_cmd_tor[1] = self.user_ref[1] * 1.0
+                
+                self.motors_cmd_mode = ['torque','torque']
                 
             elif ( self.controller_mode == 4 ):
                 pass 
                 
             elif ( self.controller_mode == 5 ):
+                """ automated mode 1 """
                 pass
                 
             elif ( self.controller_mode == 6 ):
+                """ automated mode 2 """
                 pass
             
-        self.pubish_tmotors_msg()
+            elif ( self.controller_mode == 7 ):
+                """ automated mode 3 """
+                pass
+            
+            elif ( self.controller_mode == 8 ):
+                """ automated mode 4 """
+                pass
+            
+            elif ( self.controller_mode == 9 ):
+                """ automated mode 5 """
+                pass
+            
+        self.pubish_joints_cmd_msg()
 
 
-    ####################################### Function called when a message is received from msg /joy
+    ####################################### 
     def read_joy( self, joy_msg ):
         """ """
     
-        self.user_ref        = joy_msg.axes[3]    # Up-down Right joystick 
-        self.controller_mode   = 0            
+        self.user_ref        = [ joy_msg.axes[1] , joy_msg.axes[4] ]   # Up-down [left,right] joystick 
+        self.controller_mode = 0            
                 
         # Software deadman switch
-        #If left button is active 
+        # If left button is active 
         if (joy_msg.buttons[4]):
             
             #If right button is active       
@@ -98,35 +127,41 @@ class python_controller(object):
                 
                 self.controller_mode   = 2
                 
+            #If left rigger is pressed
+            elif(joy_msg.axes[2] < 0.0):
+                
+                self.controller_mode   = 3
+                
+            #If right rigger is pressed
+            elif(joy_msg.axes[5] < 0.0):
+                
+                self.controller_mode   = 4
+                
             #If button A is active 
             elif(joy_msg.buttons[1]):   
                 
-                self.controller_mode   = 3
+                self.controller_mode   = 5
                 
             #If button B is active 
             elif(joy_msg.buttons[2]):   
                 
-                self.controller_mode   = 4
+                self.controller_mode   = 6
                 
             #If button x is active 
             elif(joy_msg.buttons[0]):   
                 
-                self.controller_mode   = 5
+                self.controller_mode   = 7
                 
             #If button y is active 
             elif(joy_msg.buttons[3]):   
                 
-                self.controller_mode   = 6
+                self.controller_mode   = 8
                 
             #If left trigger is active 
             elif (joy_msg.buttons[6]):
                 
-                self.controller_mode   = 7
+                self.controller_mode   = 9
                 
-            #If bottom arrow is active
-            elif(joy_msg.axes[5]):
-                
-                self.controller_mode   = 8
             
             # No active button
             else:
@@ -135,12 +170,12 @@ class python_controller(object):
         # Deadman is un-pressed
         else:
             
-            self.user_ref        = 0
-            self.controller_mode = 0
+            self.user_ref        = [ 0.0 , 0.0 ]   
+            self.controller_mode = 0 
       
       
     ##########################################################################################
-    def pubish_tmotors_msg(self):
+    def pubish_joints_cmd_msg(self):
  
         #Init msg
         motors_msg = JointState()
@@ -167,5 +202,5 @@ class python_controller(object):
 if __name__ == '__main__':
     
     rospy.init_node('controller',anonymous=False)
-    node = python_controller()
+    node = robot_controller()
     rospy.spin()
