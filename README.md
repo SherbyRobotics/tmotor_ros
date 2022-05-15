@@ -4,3 +4,11 @@
 2) compute command in a python controller script
 3) command is send to Tmotor ....
 4) have fun with your robot
+
+
+adding to .basrch :
+
+export PYTHONPATH=$PYTHONPATH:"""path-to"""/pyro
+
+source /opt/ros/kinetic/setup.bash
+source /home/alex/ros_ws/devel/setup.sh

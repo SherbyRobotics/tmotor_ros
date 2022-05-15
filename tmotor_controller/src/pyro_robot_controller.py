@@ -34,8 +34,8 @@ class robot_controller(object):
         # Computed torque controller
         sys              = pendulum.DoublePendulum()
         self.ct_ctl      = nonlinear.ComputedTorqueController( sys )
-        self.ct_ctl.w0   = 1.5
-        self.ct_ctl.zeta = 0.5 
+        self.ct_ctl.w0   = 10.0
+        self.ct_ctl.zeta = 0.8 
         self.ct_ctl.rbar = np.array([1.0,1.0])
         
 
@@ -103,7 +103,7 @@ class robot_controller(object):
                 """ computed torque controller """
                 
                 x  = self.x 
-                r  = np.array([1.0,1.0])
+                r  = np.array([0.1,0.1])
                 t  = 0 #TODO
                 u  = self.ct_ctl.c_fixed_goal( x , r , t )
                 
