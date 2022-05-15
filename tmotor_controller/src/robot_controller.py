@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import rospy
-#import numpy as np
+import numpy as np
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Float32MultiArray
+from sensor_msgs.msg import JointState
 
 
 #########################################
@@ -12,12 +12,12 @@ class python_controller(object):
     def __init__(self):
 
         # Init subscribers  
-        self.sub_joy        = rospy.Subscriber("joy", Joy , self.read_joy , queue_size=1) # self.read_joy is the function called when a message is received.
-        self.sub_sensors    = rospy.Subscriber("sensors", Float32MultiArray , self.read_feedback_from_arduino, queue_size=1) # self.read_feedback is the function called when a message is received.
+        self.sub_joy    = rospy.Subscriber("joy", Joy , self.read_joy , queue_size=1) # self.read_joy is the function called when a message is received.
+        self.sub_sensor = rospy.Subscriber("joints_sensor", JointState , self.read_joints, queue_size=1) 
 
         # Init publishers
-        self.pub_cmd    = rospy.Publisher("cmd", Float32MultiArray , queue_size=1)
-        
+        self.pub_cmd    = rospy.Publisher("joints_cmd", JointState , queue_size=1)
+    
         # Timer
         self.dt         = 0.02
         self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
@@ -34,58 +34,52 @@ class python_controller(object):
         
         # References Inputs
         self.user_ref        = 0
-        self.high_level_mode = 0  # Control mode of this controller node
+        self.controller_mode = 0  # Control mode of this controller node
         
         # Ouput commands
-        self.arduino_cmd    = 0  
-        self.arduino_mode   = 0  
+        self.motors_cmd_mode = ['Disable','Disable']
+        self.motors_cmd_pos  = [ 0.0 , 0.0 ]
+        self.motors_cmd_vel  = [ 0.0 , 0.0 ]
+        self.motors_cmd_tor  = [ 0.0 , 0.0 ]
         
         # Sensings inputs
-        self.sensor         = 0  # sensor feeback buffer
-        
-        # For DEBUG
-        #self.tick = 0
+        self.x = np.array([0,0,0,0])
 
         
     #######################################
     def timed_controller(self, timer):
              
-        if (self.high_level_mode == 0 ):
-            # Full stop mode
-            self.arduino_cmd    = 0  
-            self.arduino_mode   = 0
+        if (self.controller_mode == 0 ):
             
-            #Debug test sinus ref
-            #self.tick = self.tick + 1
-            #self.arduino_cmd    = 5 * np.sin( 2*3.1416 * self.tick * self.dt )
+            # Full stop mode
+            self.motors_cmd_mode = ['Disable','Disable']
+            self.motors_cmd_pos  = [ 0.0 , 0.0 ]
+            self.motors_cmd_vel  = [ 0.0 , 0.0 ]
+            self.motors_cmd_tor  = [ 0.0 , 0.0 ]
             
         else:
             ##########################
             # Controllers HERE            
             ##########################
-            if  ( self.high_level_mode == 1 ):
-                # Open-Loop
-                self.arduino_cmd    = self.user_ref
-                self.arduino_mode   = 1 
-                
-            elif ( self.high_level_mode == 2 ):
-                # Closed-loop in python node
-                self.arduino_cmd    = 10 * ( self.user_ref - self.sensor )
-                self.arduino_mode   = 2   
-                
-            elif ( self.high_level_mode == 3 ):
-                pass
-                
-            elif ( self.high_level_mode == 4 ):
-                pass 
-                
-            elif ( self.high_level_mode == 5 ):
-                pass
-                
-            elif ( self.high_level_mode == 6 ):
+            if  ( self.controller_mode == 1 ):
                 pass
             
-        self.send_cmd_to_arduino()
+            elif ( self.controller_mode == 2 ):
+                pass 
+                
+            elif ( self.controller_mode == 3 ):
+                pass
+                
+            elif ( self.controller_mode == 4 ):
+                pass 
+                
+            elif ( self.controller_mode == 5 ):
+                pass
+                
+            elif ( self.controller_mode == 6 ):
+                pass
+            
+        self.pubish_tmotors_msg()
 
 
     ####################################### Function called when a message is received from msg /joy
@@ -93,7 +87,7 @@ class python_controller(object):
         """ """
     
         self.user_ref        = joy_msg.axes[3]    # Up-down Right joystick 
-        self.high_level_mode   = 0            
+        self.controller_mode   = 0            
                 
         # Software deadman switch
         #If left button is active 
@@ -102,72 +96,71 @@ class python_controller(object):
             #If right button is active       
             if (joy_msg.buttons[5]):   
                 
-                self.high_level_mode   = 2
+                self.controller_mode   = 2
                 
             #If button A is active 
             elif(joy_msg.buttons[1]):   
                 
-                self.high_level_mode   = 3
+                self.controller_mode   = 3
                 
             #If button B is active 
             elif(joy_msg.buttons[2]):   
                 
-                self.high_level_mode   = 4
+                self.controller_mode   = 4
                 
             #If button x is active 
             elif(joy_msg.buttons[0]):   
                 
-                self.high_level_mode   = 5
+                self.controller_mode   = 5
                 
             #If button y is active 
             elif(joy_msg.buttons[3]):   
                 
-                self.high_level_mode   = 6
+                self.controller_mode   = 6
                 
             #If left trigger is active 
             elif (joy_msg.buttons[6]):
                 
-                self.high_level_mode   = 7
+                self.controller_mode   = 7
                 
             #If bottom arrow is active
             elif(joy_msg.axes[5]):
                 
-                self.high_level_mode   = 8
+                self.controller_mode   = 8
             
             # No active button
             else:
-                self.high_level_mode   = 1
+                self.controller_mode   = 1
         
         # Deadman is un-pressed
         else:
             
             self.user_ref        = 0
-            self.high_level_mode   = 0
+            self.controller_mode = 0
       
       
     ##########################################################################################
-    def send_cmd_to_arduino(self):
+    def pubish_tmotors_msg(self):
  
-      #Init msg
-      cmd_msg = Float32MultiArray()
-      data    = [0.0,0.0,0.0,0.0,0.0,0.0]
+        #Init msg
+        motors_msg = JointState()
 
-      #Msgard
-      data[1]  = self.arduino_cmd      # Command 
-      data[0]  = self.arduino_mode     # Arduino mode
-      
-      cmd_msg.data = data
+        motors_msg.name     = self.motors_cmd_mode
+        motors_msg.position = self.motors_cmd_pos
+        motors_msg.velocity = self.motors_cmd_vel
+        motors_msg.effort   = self.motors_cmd_tor
 
-      # Publish cmd msg
-      self.pub_cmd.publish(cmd_msg)
+        # Publish msg
+        self.pub_cmd.publish( motors_msg )
 
 
-    ####################################### Function called when a message is received from msg /sensors
-    def read_feedback_from_arduino( self, msg):
+    ####################################### 
+    def read_joints( self, msg):
 
-        # Read feedback from arduino
-        self.sensor       = msg.data[0]
-        
+        self.x[0] = msg.position[0]
+        self.x[1] = msg.position[1]
+        self.x[2] = msg.velocity[0]
+        self.x[3] = msg.velocity[1]
 
 #########################################
 

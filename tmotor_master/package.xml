@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ros_master</name>
+  <name>tmotor_master</name>
   <version>0.0.0</version>
-  <description>The ros_master package</description>
+  <description>The tmotor_master package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
