@@ -6,6 +6,9 @@
 4) have fun with your robot
 
 
+![Screenshot from 2022-05-15 15-58-10](https://user-images.githubusercontent.com/16725496/168492122-c4571cdc-57b0-472a-a6d9-657b00b193ee.png)
+
+
 adding to .basrch :
 
 export PYTHONPATH=$PYTHONPATH:"""path-to"""/pyro
