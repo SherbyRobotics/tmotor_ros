@@ -75,18 +75,18 @@ class robot_controller(object):
             if  ( self.controller_mode == 1 ):
                 """ position control """
                 
-                self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415
-                self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415
-                
-                self.motors_cmd_mode = ['position','position']
-            
-            elif ( self.controller_mode == 2 ):
-                """ velocity control """
-                
                 self.motors_cmd_vel[0] = self.user_ref[0] * 3.1415 * 2
                 self.motors_cmd_vel[1] = self.user_ref[1] * 3.1415 * 2
                 
                 self.motors_cmd_mode = ['velocity','velocity']
+            
+            elif ( self.controller_mode == 2 ):
+                """ velocity control """
+                
+                self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415
+                self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415
+                
+                self.motors_cmd_mode = ['position','position']
                 
             elif ( self.controller_mode == 3 ):
                 """ torque control """
@@ -112,8 +112,9 @@ class robot_controller(object):
                 self.motors_cmd_mode = ['torque','torque']
                 
             elif ( self.controller_mode == 6 ):
-                """ automated mode 2 """
-                pass
+                """ enable motors and set zero position """
+
+                self.motors_cmd_mode = ['enable','enable']
             
             elif ( self.controller_mode == 7 ):
                 """ automated mode 3 """
@@ -162,7 +163,7 @@ class robot_controller(object):
                 self.controller_mode   = 5
                 
             #If button B is active 
-            elif(joy_msg.buttons[2]):   
+            elif(joy_msg.buttons[8]):   
                 
                 self.controller_mode   = 6
                 

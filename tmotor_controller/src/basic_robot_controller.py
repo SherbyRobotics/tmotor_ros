@@ -37,7 +37,7 @@ class robot_controller(object):
         self.controller_mode = 0  # Control mode of this controller node
         
         # Ouput commands
-        self.motors_cmd_mode = ['Disable','Disable']
+        self.motors_cmd_mode = ['disable','disable']
         self.motors_cmd_pos  = [ 0.0 , 0.0 ]
         self.motors_cmd_vel  = [ 0.0 , 0.0 ]
         self.motors_cmd_tor  = [ 0.0 , 0.0 ]
@@ -52,7 +52,7 @@ class robot_controller(object):
         if (self.controller_mode == 0 ):
             
             # Full stop mode
-            self.motors_cmd_mode = ['Disable','Disable']
+            self.motors_cmd_mode = ['disable','disable']
             self.motors_cmd_pos  = [ 0.0 , 0.0 ]
             self.motors_cmd_vel  = [ 0.0 , 0.0 ]
             self.motors_cmd_tor  = [ 0.0 , 0.0 ]
@@ -64,18 +64,18 @@ class robot_controller(object):
             if  ( self.controller_mode == 1 ):
                 """ position control """
                 
-                self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415
-                self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415
-                
-                self.motors_cmd_mode = ['position','position']
-            
-            elif ( self.controller_mode == 2 ):
-                """ velocity control """
-                
                 self.motors_cmd_vel[0] = self.user_ref[0] * 3.1415 * 2
                 self.motors_cmd_vel[1] = self.user_ref[1] * 3.1415 * 2
                 
                 self.motors_cmd_mode = ['velocity','velocity']
+            
+            elif ( self.controller_mode == 2 ):
+                """ velocity control """
+                
+                self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415
+                self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415
+                
+                self.motors_cmd_mode = ['position','position']
                 
             elif ( self.controller_mode == 3 ):
                 """ torque control """
@@ -89,13 +89,13 @@ class robot_controller(object):
                 pass 
                 
             elif ( self.controller_mode == 5 ):
-                """ enable motors and set zero position """
+                """ automated mode 2 """
                 
-                self.motors_cmd_mode = ['enable','enable']
-                pass
                 
             elif ( self.controller_mode == 6 ):
-                """ automated mode 2 """
+                """ enable motors and set zero position """
+
+                self.motors_cmd_mode = ['enable','enable']
                 pass
             
             elif ( self.controller_mode == 7 ):
@@ -140,12 +140,12 @@ class robot_controller(object):
                 self.controller_mode   = 4
                 
             #If button A is active 
-            elif(joy_msg.buttons[8]):   
+            elif(joy_msg.buttons[2]):   
                 
                 self.controller_mode   = 5
                 
             #If button B is active 
-            elif(joy_msg.buttons[2]):   
+            elif(joy_msg.buttons[8]):   
                 
                 self.controller_mode   = 6
                 

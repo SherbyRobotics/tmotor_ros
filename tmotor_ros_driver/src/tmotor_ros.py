@@ -108,16 +108,14 @@ class tmotor_driver(object):
                 
                 #################################################
                 if self.motors_cmd_mode[i] == 'disable':
-                    pass
 
-                    #self.tmotors[i].disable_motor()
+                    self.tmotors[i].disable_motor()
 
                 #################################################
                 elif self.motors_cmd_mode[i] == 'enable':
-                    pass
 
-                    #self.tmotors[i].enable_motor()
-                    #self.tmotors[i].set_zero_position()
+                    self.tmotors[i].enable_motor()
+                    self.tmotors[i].set_zero_position()
 
                 #################################################
                 elif self.motors_cmd_mode[i] == 'position':
