@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
-#import numpy as np
+from motor_driver.canmotorlib import CanMotorController
+import numpy as np
 
 from sensor_msgs.msg import JointState
 
@@ -24,7 +25,20 @@ class tmotor_driver(object):
         # Paramters
         #################
         
-        self.offline_debug = True
+        self.offline_debug = False
+
+        #################
+        # Motors init
+        #################
+
+        self.tmotors = [CanMotorController(can_socket='can0', motor_id=0x01, socket_timeout=0.5), CanMotorController(can_socket='can0', motor_id=0x02, socket_timeout=0.5)]
+        self.tmotors[0].change_motor_constants(-12.5, 12.5, -41.0, 41.0, 0, 500, 0, 50, -9.0, 9.0)
+        self.tmotors[1].change_motor_constants(-12.5, 12.5, -41.0, 41.0, 0, 500, 0, 50, -9.0, 9.0)
+        self.tmotors_params = [ {'kp': 10, 'kd': 5} , {'kp': 10, 'kd': 5} ]
+
+        for i in range(2):
+            self.tmotors[i].enable_motor()
+            self.tmotors[i].set_zero_position()
         
 
         #################
@@ -32,7 +46,7 @@ class tmotor_driver(object):
         #################
         
         # cmd for tmotors
-        self.motors_cmd_mode = ['Disable','Disable']
+        self.motors_cmd_mode = ['disable','disable']
         self.motors_cmd_pos  = [ 0.0 , 0.0 ]
         self.motors_cmd_vel  = [ 0.0 , 0.0 ]
         self.motors_cmd_tor  = [ 0.0 , 0.0 ]
@@ -90,11 +104,36 @@ class tmotor_driver(object):
         else:
             #TODO
             # Send commonds to both motor and read sensor data
-            
-            #Place holder for sensor feedback
-            self.motors_sensor_pos  = [ 0.0 , 0.0 ]
-            self.motors_sensor_vel  = [ 0.0 , 0.0 ]
-            self.motors_sensor_tor  = [ 0.0 , 0.0 ]
+            for i in range(2):
+                
+                #################################################
+                if self.motors_cmd_mode[i] == 'disable':
+                    pass
+
+                    #self.tmotors[i].disable_motor()
+
+                #################################################
+                elif self.motors_cmd_mode[i] == 'enable':
+                    pass
+
+                    #self.tmotors[i].enable_motor()
+                    #self.tmotors[i].set_zero_position()
+
+                #################################################
+                elif self.motors_cmd_mode[i] == 'position':
+
+                    self.motors_sensor_pos[i] , self.motors_sensor_vel[i], self.motors_sensor_tor[i] = self.tmotors[i].send_rad_command(self.motors_cmd_pos[i], 0, self.tmotors_params[i]['kp'], 0, 0)
+                    
+                #################################################  
+                elif self.motors_cmd_mode[i] == 'velocity':
+                    
+                    self.motors_sensor_pos[i] , self.motors_sensor_vel[i], self.motors_sensor_tor[i] = self.tmotors[i].send_rad_command(0, self.motors_cmd_vel[i], 0, self.tmotors_params[i]['kd'], 0)
+                    
+                #################################################   
+                elif self.motors_cmd_mode[i] == 'torque':
+                    
+                    self.motors_sensor_pos[i] , self.motors_sensor_vel[i], self.motors_sensor_tor[i] = self.tmotors[i].send_rad_command(0, 0, 0, 0, self.motors_cmd_tor[i])
+                    
         
         
         

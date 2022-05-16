@@ -48,7 +48,7 @@ class robot_controller(object):
         self.controller_mode = 0  # Control mode of this controller node
         
         # Ouput commands
-        self.motors_cmd_mode = ['Disable','Disable']
+        self.motors_cmd_mode = ['disable','disable']
         self.motors_cmd_pos  = [ 0.0 , 0.0 ]
         self.motors_cmd_vel  = [ 0.0 , 0.0 ]
         self.motors_cmd_tor  = [ 0.0 , 0.0 ]
@@ -63,7 +63,7 @@ class robot_controller(object):
         if (self.controller_mode == 0 ):
             
             # Full stop mode
-            self.motors_cmd_mode = ['Disable','Disable']
+            self.motors_cmd_mode = ['disable','disable']
             self.motors_cmd_pos  = [ 0.0 , 0.0 ]
             self.motors_cmd_vel  = [ 0.0 , 0.0 ]
             self.motors_cmd_tor  = [ 0.0 , 0.0 ]

@@ -89,7 +89,9 @@ class robot_controller(object):
                 pass 
                 
             elif ( self.controller_mode == 5 ):
-                """ automated mode 1 """
+                """ enable motors and set zero position """
+                
+                self.motors_cmd_mode = ['enable','enable']
                 pass
                 
             elif ( self.controller_mode == 6 ):
@@ -138,7 +140,7 @@ class robot_controller(object):
                 self.controller_mode   = 4
                 
             #If button A is active 
-            elif(joy_msg.buttons[1]):   
+            elif(joy_msg.buttons[8]):   
                 
                 self.controller_mode   = 5
                 
