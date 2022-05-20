@@ -91,6 +91,7 @@ class robot_controller(object):
         
         # Start graphic
         self.animator = self.sys.get_animator()
+        self.sys.l_domain = 0.6
         self.animator.show( self.q )
         self.animator.showfig.canvas.draw()
         plt.show(block=False)
@@ -275,7 +276,7 @@ class robot_controller(object):
         self.x[3] = msg.velocity[1]
         """
         
-        self.q  = np.array([ msg.position[1] , msg.position[0] ])
+        self.q  = np.array([ msg.position[1] + 3.14 , msg.position[0] ])
         self.dq = np.array([ msg.velocity[1] , msg.velocity[0] ])
         
         self.x  = self.sys.q2x( self.q , self.dq )
