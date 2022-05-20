@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
+import time
+import matplotlib
+import matplotlib.pyplot as plt
+
 from sensor_msgs.msg import Joy
 from sensor_msgs.msg import JointState
 
@@ -23,17 +27,25 @@ class robot_controller(object):
         # Init publishers
         self.pub_cmd    = rospy.Publisher("joints_cmd", JointState , queue_size=1)
     
-        # Timer
-        #self.dt         = 0.002
-        #self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
+        # Control Timer
+        self.dt         = 0.01
+        self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
         
         #################
         # Paramters
         #################
         
+        # Robot model
+        self.sys         = pendulum.DoublePendulum()
+        self.sys.l1      = 0.3
+        self.sys.l2      = 0.3
+        self.sys.lc1     = 0.3
+        self.sys.lc2     = 0.3
+        self.sys.m1      = 0.3 
+        self.sys.m2      = 0.05
+        
         # Computed torque controller
-        sys              = pendulum.DoublePendulum()
-        self.ct_ctl      = nonlinear.ComputedTorqueController( sys )
+        self.ct_ctl      = nonlinear.ComputedTorqueController( self.sys )
         self.ct_ctl.w0   = 5.0
         self.ct_ctl.zeta = 0.5 
         self.ct_ctl.rbar = np.array([1.0,1.0])
@@ -44,7 +56,7 @@ class robot_controller(object):
         dof = 2
         
         self.joint_pd      = robotcontrollers.JointPD( dof )
-        self.joint_pd.kp   = np.array([  5.0, 5.0 ])
+        self.joint_pd.kp   = np.array([  5.0, 15.0 ])
         self.joint_pd.kd   = np.array([  0.0,  0.0 ])
         
 
@@ -63,13 +75,29 @@ class robot_controller(object):
         self.motors_cmd_tor  = [ 0.0 , 0.0 ]
         
         # Sensings inputs
-        self.x = np.array([ 0.0, 0.0, 0.0, 0.0]) # State of the system
+        self.x  = np.array([ 0.0, 0.0, 0.0, 0.0]) # State of the system
+        self.q  = np.array([ 0.0, 0.0]) # Joint angles of the system
+        self.dq = np.array([ 0.0, 0.0]) # Joint velocities of the system
         
         #Joy input
         self.controller_mode = 0
         
+        #################
+        # Initialization
+        #################
+        
         # Start loop
-        self.pubish_joints_cmd_msg()
+        #self.pubish_joints_cmd_msg()
+        
+        # Start graphic
+        self.animator = self.sys.get_animator()
+        self.animator.show( self.q )
+        self.animator.showfig.canvas.draw()
+        plt.show(block=False)
+        
+        # Graphic output Timer
+        self.dt2        = 0.1
+        self.timer2     = rospy.Timer( rospy.Duration( self.dt2 ), self.timed_graphic )
 
         
     #######################################
@@ -144,7 +172,7 @@ class robot_controller(object):
                 
                 self.motors_cmd_tor[0] = u[0]
                 self.motors_cmd_tor[1] = u[1]
-                self.motors_cmd_mode = ['torque','torque']
+                self.motors_cmd_mode = ['damped_torque','damped_torque']
             
             elif ( self.controller_mode == 8 ):
                 """ automated mode 4 """
@@ -219,7 +247,7 @@ class robot_controller(object):
             self.user_ref        = [ 0.0 , 0.0 ]   
             self.controller_mode = 0 
             
-        self.timed_controller( None )
+        #self.timed_controller( None )
       
       
     ##########################################################################################
@@ -239,18 +267,46 @@ class robot_controller(object):
 
     ####################################### 
     def read_joints( self, msg):
-
+        
+        """
         self.x[0] = msg.position[0]
         self.x[1] = msg.position[1]
         self.x[2] = msg.velocity[0]
         self.x[3] = msg.velocity[1]
+        """
         
-        self.timed_controller( None )
+        self.q  = np.array([ msg.position[1] , msg.position[0] ])
+        self.dq = np.array([ msg.velocity[1] , msg.velocity[0] ])
+        
+        self.x  = self.sys.q2x( self.q , self.dq )
+        
+        #self.timed_controller( None )
+        
+        
+    #######################################
+    def timed_graphic(self, timer):
+        
+        print(self.q)
+        
+        #self.animator.show( self.q )
+        
+        lines_pts = self.sys.forward_kinematic_lines( self.q )[0]
+        
+        robot_line = lines_pts[1]
+        #print( self.animator.showlines )
+        self.animator.showlines[1].set_data( robot_line[:, 0 ], robot_line[:, 1 ])
+        self.animator.showfig.canvas.draw()
+        #plt.show()
 
 #########################################
 
 if __name__ == '__main__':
     
+    plt.ion()
+    matplotlib.use('Qt4Agg')
+    #plt.ioff()
     rospy.init_node('controller',anonymous=False)
     node = robot_controller()
+    
+    plt.show( block = True )
     rospy.spin()

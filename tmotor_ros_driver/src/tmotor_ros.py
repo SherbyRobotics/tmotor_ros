@@ -139,6 +139,11 @@ class tmotor_driver(object):
                     
                     self.motors_sensor_pos[i] , self.motors_sensor_vel[i], self.motors_sensor_tor[i] = self.tmotors[i].send_rad_command(0, 0, 0, 0, self.motors_cmd_tor[i])
                     
+                #################################################   
+                elif self.motors_cmd_mode[i] == 'damped_torque':
+                    
+                    self.motors_sensor_pos[i] , self.motors_sensor_vel[i], self.motors_sensor_tor[i] = self.tmotors[i].send_rad_command(0, 0, 0, 2.0, self.motors_cmd_tor[i])
+                    
         
         
         
