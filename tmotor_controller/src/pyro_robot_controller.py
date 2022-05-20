@@ -44,8 +44,8 @@ class robot_controller(object):
         dof = 2
         
         self.joint_pd      = robotcontrollers.JointPD( dof )
-        self.joint_pd.kp   = np.array([  20.0, 20.0 ])
-        self.joint_pd.kd   = np.array([  1.0,  1.0 ])
+        self.joint_pd.kp   = np.array([  5.0, 5.0 ])
+        self.joint_pd.kd   = np.array([  0.0,  0.0 ])
         
 
         #################
@@ -105,7 +105,8 @@ class robot_controller(object):
                 
             elif ( self.controller_mode == 3 ):
                 """ torque control """
-                print('\nComputed torque mode')
+                #print('\n Torque mode')
+                
                 self.motors_cmd_tor[0] = self.user_ref[0] * 1.0
                 self.motors_cmd_tor[1] = self.user_ref[1] * 1.0
                 
@@ -116,7 +117,7 @@ class robot_controller(object):
                 
             elif ( self.controller_mode == 5 ):
                 """ computed torque controller """
-                print('\nComputed torque mode')
+                #print('\nComputed torque mode')
                 
                 x  = self.x 
                 r  = np.array([0.0,0.0])
@@ -134,7 +135,7 @@ class robot_controller(object):
             
             elif ( self.controller_mode == 7 ):
                 """ Joint PD """
-                print('\nJoint PD mode')
+                #print('\nJoint PD mode')
                 
                 x  = self.x 
                 r  = np.array([0.0,0.0])
