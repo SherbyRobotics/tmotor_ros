@@ -5,7 +5,7 @@
     <param name="dev" value="/dev/input/js0" />
   </node>
 
-  <node pkg="tmotor_controller" type="pyro_robot_controller.py" name="controller">
+  <node pkg="tmotor_controller" type="pyro_robot_controller.py" name="controller" output="screen">
   </node>
 
   <node pkg="tmotor_ros_driver" type="tmotor_ros.py" name="tmotors">

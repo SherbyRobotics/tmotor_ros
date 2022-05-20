@@ -24,8 +24,8 @@ class robot_controller(object):
         self.pub_cmd    = rospy.Publisher("joints_cmd", JointState , queue_size=1)
     
         # Timer
-        self.dt         = 0.02
-        self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
+        #self.dt         = 0.002
+        #self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
         
         #################
         # Paramters
@@ -34,9 +34,18 @@ class robot_controller(object):
         # Computed torque controller
         sys              = pendulum.DoublePendulum()
         self.ct_ctl      = nonlinear.ComputedTorqueController( sys )
-        self.ct_ctl.w0   = 10.0
-        self.ct_ctl.zeta = 0.8 
+        self.ct_ctl.w0   = 5.0
+        self.ct_ctl.zeta = 0.5 
         self.ct_ctl.rbar = np.array([1.0,1.0])
+
+        
+        # Joint impedance controller
+        
+        dof = 2
+        
+        self.joint_pd      = robotcontrollers.JointPD( dof )
+        self.joint_pd.kp   = np.array([  20.0, 20.0 ])
+        self.joint_pd.kd   = np.array([  1.0,  1.0 ])
         
 
         #################
@@ -55,6 +64,12 @@ class robot_controller(object):
         
         # Sensings inputs
         self.x = np.array([ 0.0, 0.0, 0.0, 0.0]) # State of the system
+        
+        #Joy input
+        self.controller_mode = 0
+        
+        # Start loop
+        self.pubish_joints_cmd_msg()
 
         
     #######################################
@@ -73,24 +88,24 @@ class robot_controller(object):
             # Controllers HERE            
             ##########################
             if  ( self.controller_mode == 1 ):
-                """ position control """
+                """ velocity control """
                 
-                self.motors_cmd_vel[0] = self.user_ref[0] * 3.1415 * 2
-                self.motors_cmd_vel[1] = self.user_ref[1] * 3.1415 * 2
+                self.motors_cmd_vel[0] = self.user_ref[0] * 3.1415 * 2.0
+                self.motors_cmd_vel[1] = self.user_ref[1] * 3.1415 * 2.0
                 
                 self.motors_cmd_mode = ['velocity','velocity']
             
             elif ( self.controller_mode == 2 ):
-                """ velocity control """
+                """ position control """
                 
-                self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415
-                self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415
+                self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415 * 0.5
+                self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415 * 0.25
                 
                 self.motors_cmd_mode = ['position','position']
                 
             elif ( self.controller_mode == 3 ):
                 """ torque control """
-                
+                print('\nComputed torque mode')
                 self.motors_cmd_tor[0] = self.user_ref[0] * 1.0
                 self.motors_cmd_tor[1] = self.user_ref[1] * 1.0
                 
@@ -101,11 +116,12 @@ class robot_controller(object):
                 
             elif ( self.controller_mode == 5 ):
                 """ computed torque controller """
+                print('\nComputed torque mode')
                 
                 x  = self.x 
-                r  = np.array([0.1,0.1])
+                r  = np.array([0.0,0.0])
                 t  = 0 #TODO
-                u  = self.ct_ctl.c_fixed_goal( x , r , t )
+                u  = self.joint_pd.c( x, r, t)
                 
                 self.motors_cmd_tor[0] = u[0]
                 self.motors_cmd_tor[1] = u[1]
@@ -117,8 +133,17 @@ class robot_controller(object):
                 self.motors_cmd_mode = ['enable','enable']
             
             elif ( self.controller_mode == 7 ):
-                """ automated mode 3 """
-                pass
+                """ Joint PD """
+                print('\nJoint PD mode')
+                
+                x  = self.x 
+                r  = np.array([0.0,0.0])
+                t  = 0 #TODO
+                u  = self.joint_pd.c( x, r, t)
+                
+                self.motors_cmd_tor[0] = u[0]
+                self.motors_cmd_tor[1] = u[1]
+                self.motors_cmd_mode = ['torque','torque']
             
             elif ( self.controller_mode == 8 ):
                 """ automated mode 4 """
@@ -192,6 +217,8 @@ class robot_controller(object):
             
             self.user_ref        = [ 0.0 , 0.0 ]   
             self.controller_mode = 0 
+            
+        self.timed_controller( None )
       
       
     ##########################################################################################
@@ -216,6 +243,8 @@ class robot_controller(object):
         self.x[1] = msg.position[1]
         self.x[2] = msg.velocity[0]
         self.x[3] = msg.velocity[1]
+        
+        self.timed_controller( None )
 
 #########################################
 
