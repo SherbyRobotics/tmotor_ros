@@ -130,8 +130,6 @@ class robot_controller(object):
                 self.motors_cmd_vel[0] = self.user_ref[0] * 3.1415 * 2.0
                 self.motors_cmd_vel[1] = self.user_ref[1] * 3.1415 * 2.0
                 self.motors_cmd_mode   = ['velocity','velocity']
-                
-                self.u = np.array( self.motors_cmd_vel ) * 0.1
             
             elif ( self.controller_mode == 2 ):
                 """ position control """
@@ -140,15 +138,12 @@ class robot_controller(object):
                 self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415 * 0.25
                 self.motors_cmd_mode   = ['position','position']
                 
-                self.u = np.array( self.motors_cmd_pos ) * 0.5
-                
             elif ( self.controller_mode == 3 ):
                 """ torque control """
                 #print('\n Torque mode')
                 
                 u = np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
                 
-                self.u                 = u    # for graphic output
                 self.motors_cmd_tor[0] = u[0]
                 self.motors_cmd_tor[1] = u[1]
                 
@@ -166,7 +161,6 @@ class robot_controller(object):
                 t  = 0 #TODO
                 u  = self.joint_pd.c( x, r, t)
                 
-                self.u                 = u    # for graphic output
                 self.motors_cmd_tor[0] = u[0]
                 self.motors_cmd_tor[1] = u[1]
                 self.motors_cmd_mode = ['torque','torque']
@@ -185,7 +179,6 @@ class robot_controller(object):
                 t  = 0 #TODO
                 u  = self.joint_pd.c( x, r, t)
                 
-                self.u                 = u    # for graphic output
                 self.motors_cmd_tor[0] = u[0]
                 self.motors_cmd_tor[1] = u[1]
                 self.motors_cmd_mode = ['damped_torque','damped_torque']
@@ -295,7 +288,7 @@ class robot_controller(object):
         self.dq = np.array([ msg.velocity[1] , msg.velocity[0] ])
         
         self.x  = self.sys.q2x( self.q , self.dq )
-        
+        self.u  = np.array([ msg.effort[1] , msg.effort[0] ])
         #self.timed_controller( None )
         
         
