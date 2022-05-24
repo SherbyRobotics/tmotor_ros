@@ -43,6 +43,10 @@ class robot_controller(object):
         self.sys.lc2     = 0.3
         self.sys.m1      = 0.3 
         self.sys.m2      = 0.05
+        self.sys.u_lb[0] = -1.0
+        self.sys.u_lb[0] = -1.0
+        self.sys.u_ub[0] = 1.0
+        self.sys.u_ub[0] = 1.0
         
         # Computed torque controller
         self.ct_ctl      = nonlinear.ComputedTorqueController( self.sys )
@@ -74,6 +78,9 @@ class robot_controller(object):
         self.motors_cmd_vel  = [ 0.0 , 0.0 ]
         self.motors_cmd_tor  = [ 0.0 , 0.0 ]
         
+        # Robot command
+        self.u  = np.array( self.motors_cmd_tor )
+        
         # Sensings inputs
         self.x  = np.array([ 0.0, 0.0, 0.0, 0.0]) # State of the system
         self.q  = np.array([ 0.0, 0.0]) # Joint angles of the system
@@ -92,7 +99,8 @@ class robot_controller(object):
         # Start graphic
         self.animator = self.sys.get_animator()
         self.sys.l_domain = 0.6
-        self.animator.show( self.q )
+        #self.animator.show( self.q )
+        self.animator.show_plus( self.x , self.u, 0 )
         self.animator.showfig.canvas.draw()
         plt.show(block=False)
         
@@ -121,23 +129,28 @@ class robot_controller(object):
                 
                 self.motors_cmd_vel[0] = self.user_ref[0] * 3.1415 * 2.0
                 self.motors_cmd_vel[1] = self.user_ref[1] * 3.1415 * 2.0
+                self.motors_cmd_mode   = ['velocity','velocity']
                 
-                self.motors_cmd_mode = ['velocity','velocity']
+                self.u = np.array( self.motors_cmd_vel ) * 0.1
             
             elif ( self.controller_mode == 2 ):
                 """ position control """
                 
                 self.motors_cmd_pos[0] = self.user_ref[0] * 3.1415 * 0.5
                 self.motors_cmd_pos[1] = self.user_ref[1] * 3.1415 * 0.25
+                self.motors_cmd_mode   = ['position','position']
                 
-                self.motors_cmd_mode = ['position','position']
+                self.u = np.array( self.motors_cmd_pos ) * 0.5
                 
             elif ( self.controller_mode == 3 ):
                 """ torque control """
                 #print('\n Torque mode')
                 
-                self.motors_cmd_tor[0] = self.user_ref[0] * 1.0
-                self.motors_cmd_tor[1] = self.user_ref[1] * 1.0
+                u = np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
+                self.u                 = u    # for graphic output
+                self.motors_cmd_tor[0] = u[0]
+                self.motors_cmd_tor[1] = u[1]
                 
                 self.motors_cmd_mode = ['torque','torque']
                 
@@ -153,6 +166,7 @@ class robot_controller(object):
                 t  = 0 #TODO
                 u  = self.joint_pd.c( x, r, t)
                 
+                self.u                 = u    # for graphic output
                 self.motors_cmd_tor[0] = u[0]
                 self.motors_cmd_tor[1] = u[1]
                 self.motors_cmd_mode = ['torque','torque']
@@ -171,6 +185,7 @@ class robot_controller(object):
                 t  = 0 #TODO
                 u  = self.joint_pd.c( x, r, t)
                 
+                self.u                 = u    # for graphic output
                 self.motors_cmd_tor[0] = u[0]
                 self.motors_cmd_tor[1] = u[1]
                 self.motors_cmd_mode = ['damped_torque','damped_torque']
@@ -287,17 +302,15 @@ class robot_controller(object):
     #######################################
     def timed_graphic(self, timer):
         
-        print(self.q)
-        
-        #self.animator.show( self.q )
-        
+        """
         lines_pts = self.sys.forward_kinematic_lines( self.q )[0]
-        
         robot_line = lines_pts[1]
-        #print( self.animator.showlines )
         self.animator.showlines[1].set_data( robot_line[:, 0 ], robot_line[:, 1 ])
         self.animator.showfig.canvas.draw()
-        #plt.show()
+        """
+        
+        self.animator.show_plus_update( self.x, self.u, 0.0 )
+
 
 #########################################
 
