@@ -4,6 +4,7 @@ from motor_driver.canmotorlib import CanMotorController
 import numpy as np
 
 from sensor_msgs.msg import JointState
+from std_msgs.msg    import Header
 
 #########################################
 class tmotor_driver(object):
@@ -144,6 +145,11 @@ class tmotor_driver(object):
                     
                     self.motors_sensor_pos[i] , self.motors_sensor_vel[i], self.motors_sensor_tor[i] = self.tmotors[i].send_rad_command(0, 0, 0, 2.0, self.motors_cmd_tor[i])
                     
+                #################################################   
+                elif self.motors_cmd_mode[i] == 'velocity_plus_torque':
+                    
+                    self.motors_sensor_pos[i] , self.motors_sensor_vel[i], self.motors_sensor_tor[i] = self.tmotors[i].send_rad_command(0, self.motors_cmd_vel[i], 0, self.tmotors_params[i]['kd'], self.motors_cmd_tor[i])
+                    
         
         
         
@@ -155,7 +161,11 @@ class tmotor_driver(object):
         """ """
         #Init msg
         motors_msg = JointState()
-
+        
+        header       = Header()
+        header.stamp = rospy.Time.now()
+        
+        motors_msg.header   = header
         motors_msg.name     = self.motors_names
         motors_msg.position = self.motors_sensor_pos
         motors_msg.velocity = self.motors_sensor_vel

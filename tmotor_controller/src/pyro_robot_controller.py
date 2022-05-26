@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from sensor_msgs.msg import Joy
 from sensor_msgs.msg import JointState
+from std_msgs.msg    import Header
 
 from pyro.control  import robotcontrollers
 from pyro.dynamic  import manipulator
@@ -133,21 +134,44 @@ class robot_controller(object):
             ##########################
             # Controllers HERE            
             ##########################
-            if  ( self.controller_mode == 1 ):
+            if  ( self.controller_mode == 3 ):
                 """ velocity control """
                 
                 self.motors_cmd_vel[0] = self.user_ref[1] * 3.1415 * 2.0
                 self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 2.0
-                self.motors_cmd_mode   = ['velocity','velocity']
-            
+                
+                u  = self.sys.g( self.q )
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
+                
+                #self.motors_cmd_mode   = ['velocity','velocity']
+                self.motors_cmd_mode   = ['velocity_plus_torque','velocity_plus_torque']
+                
+                
             elif ( self.controller_mode == 2 ):
-                """ position control """
+                """ Effector Velocity control """
+                #""" position control """
+                #self.motors_cmd_pos[0] = self.user_ref[1] * 3.1415 * 0.5
+                #self.motors_cmd_pos[1] = self.user_ref[0] * 3.1415 * 0.25
+                #self.motors_cmd_mode   = ['position','position']
                 
-                self.motors_cmd_pos[0] = self.user_ref[1] * 3.1415 * 0.5
-                self.motors_cmd_pos[1] = self.user_ref[0] * 3.1415 * 0.25
-                self.motors_cmd_mode   = ['position','position']
+                dr =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
                 
-            elif ( self.controller_mode == 3 ):
+                J = self.sys.J( self.q )
+                
+                dq = np.dot( np.linalg.inv( J ) , dr )
+                
+                self.motors_cmd_vel[0] = dq[0]
+                self.motors_cmd_vel[1] = dq[1]
+                
+                u  = self.sys.g( self.q )
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
+                
+                self.motors_cmd_mode   = ['velocity_plus_torque','velocity_plus_torque']
+                
+                
+            elif ( self.controller_mode == 1 ):
                 """ torque control """
                 #print('\n Torque mode')
                 
@@ -311,6 +335,11 @@ class robot_controller(object):
  
         #Init msg
         motors_msg = JointState()
+        
+        header       = Header()
+        header.stamp = rospy.Time.now()
+        
+        motors_msg.header   = header
 
         motors_msg.name     = self.motors_cmd_mode
         motors_msg.position = self.motors_cmd_pos
