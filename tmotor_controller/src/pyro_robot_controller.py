@@ -160,8 +160,11 @@ class robot_controller(object):
                 
             elif ( self.controller_mode == 4 ):
                 """ Effector PD + gravity compensation """
+                
+                user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
                 x  = self.x 
-                r  = np.array([-0.4,0.0])
+                r  = np.array([-0.4,0.0]) + user * 0.5
                 t  = 0 #TODO
                 u  = self.eff_pd.c( x, r, t) + self.sys.g( self.q )
                 
@@ -173,8 +176,10 @@ class robot_controller(object):
                 """ computed torque controller """
                 #print('\nComputed torque mode')
                 
+                user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
                 x  = self.x 
-                r  = np.array([0.0,0.0])
+                r  = np.array([0.0,0.0]) + user * 1.0
                 t  = 0 #TODO
                 u  = self.ct_ctl.c( x, r, t)
                 
@@ -187,8 +192,11 @@ class robot_controller(object):
                 
             elif ( self.controller_mode == 6 ):
                 """ Effector PD """
+                
+                user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
                 x  = self.x 
-                r  = np.array([-0.4,0.0])
+                r  = np.array([-0.4,0.0]) + user * 0.5
                 t  = 0 #TODO
                 u  = self.eff_pd.c( x, r, t)
                 
@@ -200,8 +208,10 @@ class robot_controller(object):
                 """ x:  Joint PD """
                 #print('\nJoint PD mode')
                 
+                user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
                 x  = self.x 
-                r  = np.array([0.0,0.0])
+                r  = np.array([0.0,0.0]) + user * 0.5
                 t  = 0 #TODO
                 u  = self.joint_pd.c( x, r, t)
                 
@@ -212,10 +222,12 @@ class robot_controller(object):
             elif ( self.controller_mode == 8 ):
                 """ y : gravity compensation"""
                 
+                user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
                 x  = self.x 
-                r  = np.array([0.0,0.0])
+                r  = np.array([0.0,0.0]) 
                 t  = 0 #TODO
-                u  = self.sys.g( self.q )
+                u  = self.sys.g( self.q ) * ( 1.0 - user[0] )
                 
                 self.motors_cmd_tor[0] = u[1]
                 self.motors_cmd_tor[1] = u[0]
