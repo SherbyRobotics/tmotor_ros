@@ -36,19 +36,22 @@ class robot_controller(object):
         #################
         
         # Robot model
-        self.sys         = pendulum.DoublePendulum()
+        #self.sys         = pendulum.DoublePendulum()
+        self.sys         = manipulator.TwoLinkManipulator()
         self.sys.l1      = 0.3
         self.sys.l2      = 0.3
         self.sys.lc1     = 0.3
         self.sys.lc2     = 0.3
-        self.sys.I1      = 0.5
-        self.sys.I2      = 0.2
+        self.sys.I1      = 0.05
+        self.sys.I2      = 0.05
         self.sys.m1      = 0.9
         self.sys.m2      = 0.05
+        self.sys.d1      = 0.0
+        self.sys.d2      = 0.0
         self.sys.u_lb[0] = -1.0
-        self.sys.u_lb[0] = -1.0
+        self.sys.u_lb[1] = -1.0
         self.sys.u_ub[0] = 1.0
-        self.sys.u_ub[0] = 1.0
+        self.sys.u_ub[1] = 1.0
         
         # Computed torque controller
         self.ct_ctl      = nonlinear.ComputedTorqueController( self.sys )
@@ -58,12 +61,16 @@ class robot_controller(object):
 
         
         # Joint impedance controller
-        
         dof = 2
-        
         self.joint_pd      = robotcontrollers.JointPD( dof )
         self.joint_pd.kp   = np.array([  3.0, 3.0 ])
         self.joint_pd.kd   = np.array([  1.0,  1.0 ])
+        
+        # Effector impedance controller
+        self.eff_pd      = robotcontrollers.EndEffectorPD( self.sys )
+        self.eff_pd.rbar = np.array([-0.4,+0.0])
+        self.eff_pd.kp   = np.array([ 15.0, 15.0 ])
+        self.eff_pd.kd   = np.array([ 5.0, 5.0 ])
         
 
         #################
@@ -152,35 +159,49 @@ class robot_controller(object):
                 self.motors_cmd_mode = ['torque','torque']
                 
             elif ( self.controller_mode == 4 ):
-                """ RT """
-                pass 
+                """ Effector PD + gravity compensation """
+                x  = self.x 
+                r  = np.array([-0.4,0.0])
+                t  = 0 #TODO
+                u  = self.eff_pd.c( x, r, t) + self.sys.g( self.q )
+                
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
+                self.motors_cmd_mode = ['torque','torque']
                 
             elif ( self.controller_mode == 5 ):
                 """ computed torque controller """
                 #print('\nComputed torque mode')
                 
                 x  = self.x 
-                r  = np.array([3.14-3.1415,0.0])
+                r  = np.array([0.0,0.0])
                 t  = 0 #TODO
                 u  = self.ct_ctl.c( x, r, t)
                 
-                print('state:',x)
-                print('cmd:',u)
+                #print('state:',x)
+                #print('cmd:',u)
                 
                 self.motors_cmd_tor[0] = u[1]
                 self.motors_cmd_tor[1] = u[0]
                 self.motors_cmd_mode = ['torque','torque']
                 
             elif ( self.controller_mode == 6 ):
-                """ RT """
-                pass 
+                """ Effector PD """
+                x  = self.x 
+                r  = np.array([-0.4,0.0])
+                t  = 0 #TODO
+                u  = self.eff_pd.c( x, r, t)
+                
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
+                self.motors_cmd_mode = ['torque','torque']
             
             elif ( self.controller_mode == 7 ):
-                """ a:  Joint PD """
+                """ x:  Joint PD """
                 #print('\nJoint PD mode')
                 
                 x  = self.x 
-                r  = np.array([0.0-3.14,0.0])
+                r  = np.array([0.0,0.0])
                 t  = 0 #TODO
                 u  = self.joint_pd.c( x, r, t)
                 
