@@ -45,7 +45,7 @@ class robot_controller(object):
         self.sys.lc2     = 0.3
         self.sys.I1      = 0.05
         self.sys.I2      = 0.05
-        self.sys.m1      = 0.7
+        self.sys.m1      = 0.6
         self.sys.m2      = 0.03
         self.sys.d1      = 0.0
         self.sys.d2      = 0.0
@@ -56,8 +56,8 @@ class robot_controller(object):
         
         # Computed torque controller
         self.ct_ctl      = nonlinear.ComputedTorqueController( self.sys )
-        self.ct_ctl.w0   = 3.0
-        self.ct_ctl.zeta = 0.7
+        self.ct_ctl.w0   = 2.7
+        self.ct_ctl.zeta = 0.8
         self.ct_ctl.rbar = np.array([0.0,0.0])
 
         
@@ -70,7 +70,7 @@ class robot_controller(object):
         # Effector impedance controller
         self.eff_pd      = robotcontrollers.EndEffectorPD( self.sys )
         self.eff_pd.rbar = np.array([-0.4,+0.0])
-        self.eff_pd.kp   = np.array([ 15.0, 15.0 ])
+        self.eff_pd.kp   = np.array([ 25.0, 25.0 ])
         self.eff_pd.kd   = np.array([ 5.0, 5.0 ])
         
 
@@ -183,7 +183,7 @@ class robot_controller(object):
                 
                 # Target velocity
                 self.motors_cmd_vel[0] = self.user_ref[1] * 3.1415 * 2.0
-                self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 2.0
+                self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 1.0
                 
                 # Gravity compensation
                 u  = self.sys.g( self.q )
@@ -210,14 +210,14 @@ class robot_controller(object):
                 
                 self.motors_cmd_tor[0] = u[1]
                 self.motors_cmd_tor[1] = u[0]
-                self.motors_cmd_mode = ['damped_torque','damped_torque']
+                self.motors_cmd_mode = ['torque','torque']
                 
                 
             ####################################################    
             elif ( self.controller_mode == 4 ):
                 self.controller_mode_name = 'effector velocity control'
                 
-                dr =  np.array([ self.user_ref[0] * 0.2 , self.user_ref[1] * 0.2   ])
+                dr =  np.array([ self.user_ref[0] * 0.4 , self.user_ref[1] * 0.4   ])
                 
                 J = self.sys.J( self.q )
                 
