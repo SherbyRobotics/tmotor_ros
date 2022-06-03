@@ -41,7 +41,7 @@ class robot_controller(object):
         self.sys         = manipulator.TwoLinkManipulator()
         self.sys.l1      = 0.4
         self.sys.l2      = 0.3
-        self.sys.lc1     = 0.3
+        self.sys.lc1     = 0.4
         self.sys.lc2     = 0.3
         self.sys.I1      = 0.05
         self.sys.I2      = 0.05
@@ -56,7 +56,7 @@ class robot_controller(object):
         
         # Computed torque controller
         self.ct_ctl      = nonlinear.ComputedTorqueController( self.sys )
-        self.ct_ctl.w0   = 2.0
+        self.ct_ctl.w0   = 3.0
         self.ct_ctl.zeta = 0.7
         self.ct_ctl.rbar = np.array([0.0,0.0])
 
@@ -167,21 +167,54 @@ class robot_controller(object):
             ##########################
             # Controllers HERE            
             ##########################
-            if  ( self.controller_mode == 3 ):
-                self.controller_mode_name = 'velocity control'
+            if ( self.controller_mode == 1 ):
+                self.controller_mode_name = 'manual torque control'
                 
+                u = np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
+                
+                self.motors_cmd_mode = ['torque','torque']
+            
+            ####################################################   
+            elif  ( self.controller_mode == 2 ):
+                self.controller_mode_name = 'joint velocity control'
+                
+                # Target velocity
                 self.motors_cmd_vel[0] = self.user_ref[1] * 3.1415 * 2.0
                 self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 2.0
                 
+                # Gravity compensation
                 u  = self.sys.g( self.q )
                 self.motors_cmd_tor[0] = u[1]
                 self.motors_cmd_tor[1] = u[0]
                 
-                #self.motors_cmd_mode   = ['velocity','velocity']
-                self.motors_cmd_mode   = ['velocity_plus_torque','velocity_plus_torque']
+                # Integral action
+                self.motors_cmd_pos[0] = self.last_target_position[0] + self.motors_cmd_vel[0] * dt
+                self.motors_cmd_pos[1] = self.last_target_position[1] + self.motors_cmd_vel[1] * dt
+                
+                self.last_target_position = self.motors_cmd_pos
+                
+                self.motors_cmd_mode   = ['position_velocity_torque','position_velocity_torque']
+                
+            ####################################################
+            elif ( self.controller_mode == 3 ):
+                self.controller_mode_name = 'gravity compensation'
+                
+                user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
+                
+                x  = self.x 
+                r  = np.array([0.0,0.0]) 
+                u  = self.sys.g( self.q ) * ( 1.0 - user[0] )
+                
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
+                self.motors_cmd_mode = ['damped_torque','damped_torque']
+                
                 
             ####################################################    
-            elif ( self.controller_mode == 2 ):
+            elif ( self.controller_mode == 4 ):
                 self.controller_mode_name = 'effector velocity control'
                 
                 dr =  np.array([ self.user_ref[0] * 0.2 , self.user_ref[1] * 0.2   ])
@@ -207,31 +240,6 @@ class robot_controller(object):
                 
                 self.motors_cmd_mode   = ['position_velocity_torque','position_velocity_torque']
                 
-            ####################################################   
-            elif ( self.controller_mode == 1 ):
-                self.controller_mode_name = 'manual torque control'
-                
-                u = np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
-                
-                self.motors_cmd_tor[0] = u[1]
-                self.motors_cmd_tor[1] = u[0]
-                
-                self.motors_cmd_mode = ['torque','torque']
-            
-            ####################################################
-            elif ( self.controller_mode == 4 ):
-                self.controller_mode_name = 'effector PD control with gravity compensation (python)'
-                
-                user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
-                
-                x  = self.x 
-                r  = np.array([-0.4,0.0]) + user * 0.5
-                u  = self.eff_pd.c( x, r, t) + self.sys.g( self.q )
-                
-                self.motors_cmd_tor[0] = u[1]
-                self.motors_cmd_tor[1] = u[0]
-                self.motors_cmd_mode = ['torque','torque']
-            
             ####################################################
             elif ( self.controller_mode == 5 ):
                 self.controller_mode_name = 'computed torque controller'
@@ -251,7 +259,46 @@ class robot_controller(object):
             
             ####################################################
             elif ( self.controller_mode == 6 ):
-                self.controller_mode_name = 'effector PD control (python)'
+                self.controller_mode_name = 'empty'
+                
+                self.motors_cmd_tor[0] = 0.0
+                self.motors_cmd_tor[1] = 0.0
+                self.motors_cmd_mode = ['torque','torque']
+            
+            ####################################################
+            elif ( self.controller_mode == 7 ):
+                self.controller_mode_name = 'empty'
+                
+                self.motors_cmd_tor[0] = 0.0
+                self.motors_cmd_tor[1] = 0.0
+                self.motors_cmd_mode = ['torque','torque']
+                
+            ####################################################
+            elif ( self.controller_mode == 8 ):
+                self.controller_mode_name = 'empty'
+                
+                self.motors_cmd_tor[0] = 0.0
+                self.motors_cmd_tor[1] = 0.0
+                self.motors_cmd_mode = ['torque','torque']
+                
+            ####################################################
+            elif ( self.controller_mode == 9 ):
+                self.controller_mode_name = 'reseting motor zero and enabling motors'
+
+                self.motors_cmd_mode = ['enable','enable']
+                
+            ####################################################    
+            elif ( self.controller_mode == 10):
+                
+                self.controller_mode_name = 'joint PD control (t-motor)'
+                
+                self.motors_cmd_pos[0] = self.user_ref[1] * 3.1415 * 0.5
+                self.motors_cmd_pos[1] = self.user_ref[0] * 3.1415 * 0.25
+                self.motors_cmd_mode   = ['position','position']
+                
+            ####################################################    
+            elif  ( self.controller_mode == 11 ):
+                self.controller_mode_name = 'effector PD '
                 
                 user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
                 
@@ -264,7 +311,7 @@ class robot_controller(object):
                 self.motors_cmd_mode = ['torque','torque']
             
             ####################################################
-            elif ( self.controller_mode == 7 ):
+            elif  ( self.controller_mode == 12 ):
                 self.controller_mode_name = 'joint PD control (python)'
                 
                 user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
@@ -278,82 +325,18 @@ class robot_controller(object):
                 self.motors_cmd_mode = ['torque','torque']
             
             ####################################################
-            elif ( self.controller_mode == 8 ):
-                self.controller_mode_name = 'gravity compensation'
+            elif  ( self.controller_mode == 13 ):
+                self.controller_mode_name = 'effector PD control with gravity compensation'
                 
                 user =  np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
                 
                 x  = self.x 
-                r  = np.array([0.0,0.0]) 
-                u  = self.sys.g( self.q ) * ( 1.0 - user[0] )
+                r  = np.array([-0.4,0.0]) + user * 0.5
+                u  = self.eff_pd.c( x, r, t) + self.sys.g( self.q )
                 
                 self.motors_cmd_tor[0] = u[1]
                 self.motors_cmd_tor[1] = u[0]
-                self.motors_cmd_mode = ['damped_torque','damped_torque']
-                
-            ####################################################
-            elif ( self.controller_mode == 9 ):
-                self.controller_mode_name = 'reseting motor zero and enabling motors'
-
-                self.motors_cmd_mode = ['enable','enable']
-                
-            ####################################################    
-            elif ( self.controller_mode == 10):
-                
-                self.controller_mode_name = 'joint position control'
-                
-                self.motors_cmd_pos[0] = self.user_ref[1] * 3.1415 * 0.5
-                self.motors_cmd_pos[1] = self.user_ref[0] * 3.1415 * 0.25
-                self.motors_cmd_mode   = ['position','position']
-                
-            ####################################################    
-            elif  ( self.controller_mode == 11 ):
-                self.controller_mode_name = 'pure velocity'
-                
-                self.motors_cmd_vel[0] = self.user_ref[1] * 3.1415 * 2.0
-                self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 2.0
-                
-                u  = self.sys.g( self.q )
-                self.motors_cmd_tor[0] = u[1]
-                self.motors_cmd_tor[1] = u[0]
-                
-                self.motors_cmd_mode   = ['velocity','velocity']
-                #self.motors_cmd_mode   = ['velocity_plus_torque','velocity_plus_torque']
-            
-            ####################################################
-            elif  ( self.controller_mode == 12 ):
-                self.controller_mode_name = 'velocity test'
-                
-                # Target velocity
-                self.motors_cmd_vel[0] = self.user_ref[1] * 3.1415 * 2.0
-                self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 2.0
-                
-                # Gravity compensation
-                u  = self.sys.g( self.q )
-                self.motors_cmd_tor[0] = u[1]
-                self.motors_cmd_tor[1] = u[0]
-                
-                # Integral action
-                self.motors_cmd_pos[0] = self.last_target_position[0] + self.motors_cmd_vel[0] * dt
-                self.motors_cmd_pos[1] = self.last_target_position[1] + self.motors_cmd_vel[1] * dt
-                
-                self.last_target_position = self.motors_cmd_pos
-                
-                self.motors_cmd_mode   = ['position_velocity_torque','position_velocity_torque']
-            
-            ####################################################
-            elif  ( self.controller_mode == 13 ):
-                self.controller_mode_name = 'velocity test 2'
-                
-                self.motors_cmd_vel[0] = self.user_ref[1] * 3.1415 * 2.0
-                self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 2.0
-                
-                u  = self.sys.g( self.q )
-                self.motors_cmd_tor[0] = u[1]
-                self.motors_cmd_tor[1] = u[0]
-                
-                #self.motors_cmd_mode   = ['velocity','velocity']
-                self.motors_cmd_mode   = ['velocity_plus_torque','velocity_plus_torque']
+                self.motors_cmd_mode = ['torque','torque']
             
         self.pubish_joints_cmd_msg()
 
@@ -414,20 +397,21 @@ class robot_controller(object):
                 
                 self.controller_mode   = 10
                 
-            # up-arrow
-            elif (joy_msg.axes[7] > 0.0):
+            # right-arrow
+            elif (joy_msg.axes[6] > 0.0):
                 
                 self.controller_mode   = 11
-            
+                
             # left-arrow
             elif (joy_msg.axes[6] < 0.0):
                 
                 self.controller_mode   = 12
                 
-            # right-arrow
-            elif (joy_msg.axes[6] > 0.0):
+            # up-arrow
+            elif (joy_msg.axes[7] > 0.0):
                 
                 self.controller_mode   = 13
+                
 
             # No active button
             else:
