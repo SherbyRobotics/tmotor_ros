@@ -35,7 +35,7 @@ class tmotor_driver(object):
         self.tmotors = [CanMotorController(can_socket='can0', motor_id=0x01, socket_timeout=0.5), CanMotorController(can_socket='can0', motor_id=0x02, socket_timeout=0.5)]
         self.tmotors[0].change_motor_constants(-12.5, 12.5, -41.0, 41.0, 0, 500, 0, 50, -9.0, 9.0)
         self.tmotors[1].change_motor_constants(-12.5, 12.5, -41.0, 41.0, 0, 500, 0, 50, -9.0, 9.0)
-        self.tmotors_params = [ {'kp': 20, 'kd': 5, 'vel_kp': 5, 'vel_ki': 4} , {'kp': 20, 'kd': 5, 'vel_kp': 5, 'vel_ki': 4} ]
+        self.tmotors_params = [ {'kp': 20, 'kd': 5, 'vel_kp': 5, 'vel_ki': 2} , {'kp': 20, 'kd': 5, 'vel_kp': 5, 'vel_ki': 2} ]
         
 
         #################

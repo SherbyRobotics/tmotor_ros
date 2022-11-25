@@ -259,11 +259,44 @@ class robot_controller(object):
             
             ####################################################
             elif ( self.controller_mode == 6 ):
-                self.controller_mode_name = 'empty'
+                self.controller_mode_name = 'trajectory following'
                 
-                self.motors_cmd_tor[0] = 0.0
-                self.motors_cmd_tor[1] = 0.0
-                self.motors_cmd_mode = ['torque','torque']
+                r    = self.sys.forward_kinematic_effector( self.q )
+                
+                # traj param
+                w      = 2.0
+                radius = 0.10
+                center = np.array([ -0.3 , -0.2  ])
+                
+                r_d  = center + radius * np.array([ np.cos( w * t ) , np.sin( w * t )  ]) 
+                
+                dr_d = radius * w * np.array([ - np.sin( w * t ) , np.cos( w * t )  ]) 
+                
+                K    = np.ones( 2  ) * 1.0
+                
+                r_e  = r_d - r
+                dr   =  dr_d + K * r_e
+                
+                J = self.sys.J( self.q )
+                
+                dq = np.dot( np.linalg.inv( J ) , dr )
+                
+                # Target velocity
+                self.motors_cmd_vel[0] = dq[1]
+                self.motors_cmd_vel[1] = dq[0]
+                
+                # Gravity compensation
+                u  = self.sys.g( self.q )
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
+                
+                # Integral action
+                self.motors_cmd_pos[0] = self.last_target_position[0] + self.motors_cmd_vel[0] * dt
+                self.motors_cmd_pos[1] = self.last_target_position[1] + self.motors_cmd_vel[1] * dt
+                
+                self.last_target_position = self.motors_cmd_pos
+                
+                self.motors_cmd_mode   = ['position_velocity_torque','position_velocity_torque']
             
             ####################################################
             elif ( self.controller_mode == 7 ):
@@ -295,6 +328,7 @@ class robot_controller(object):
                 self.motors_cmd_pos[0] = self.user_ref[1] * 3.1415 * 0.5
                 self.motors_cmd_pos[1] = self.user_ref[0] * 3.1415 * 0.25
                 self.motors_cmd_mode   = ['position','position']
+                #self.motors_cmd_mode = ['disable','disable']
                 
             ####################################################    
             elif  ( self.controller_mode == 11 ):
@@ -467,7 +501,7 @@ class robot_controller(object):
     #######################################
     def timed_graphic(self, timer):
         
-        print('Control mode = ' , self.controller_mode_name)
+        print('Control mode = ' , self.controller_mode_name, '  q=', self.q)
         self.animator.show_plus_update( self.x, self.u, 0.0 )
 
 
