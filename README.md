@@ -24,15 +24,8 @@ A 2 DoF arm using this code is demonstrated in this video:
 https://youtu.be/Cbtk6y84C6I
 
 
-# Installation
 
-adding to .basrch :
-
-export PYTHONPATH=$PYTHONPATH:"""path-to"""/pyro
-
-source /opt/ros/kinetic/setup.bash
-source /home/alex/ros_ws/devel/setup.sh
-
+## Motor initialization
 
 Use `ip link show` to verify that the CAN interface is detected
 
@@ -49,7 +42,16 @@ To communicate with the motors, it is important to set up the CAN interface to 1
 	pip3 install bitstring
 
 **mini-cheetah-tmotor-python-can :**
-
-	pip3 install mini-cheetah-motor-driver-socketcan
   
   NOTE: There is a unsolve bug in the latest version, use our fork for older compatible version
+  
+**pyro (optional for advanced control mode) :**
+  
+  
+## Installation
+
+adding to .basrch :
+
+export PYTHONPATH=$PYTHONPATH:"""path-to"""/pyro
+source /opt/ros/kinetic/setup.bash
+source """path-to"""/ros_ws/devel/setup.sh
