@@ -32,3 +32,24 @@ export PYTHONPATH=$PYTHONPATH:"""path-to"""/pyro
 
 source /opt/ros/kinetic/setup.bash
 source /home/alex/ros_ws/devel/setup.sh
+
+
+Use `ip link show` to verify that the CAN interface is detected
+
+To communicate with the motors, it is important to set up the CAN interface to 1M baudrate:
+
+	sudo ip link set can0 type can bitrate 1000000
+
+	sudo ip link set up can0
+
+## Dependencies:
+
+**bitstring :**
+
+	pip3 install bitstring
+
+**mini-cheetah-tmotor-python-can :**
+
+	pip3 install mini-cheetah-motor-driver-socketcan
+  
+  NOTE: There is a unsolve bug in the latest version, use our fork for older compatible version
