@@ -511,7 +511,7 @@ class robot_controller(object):
 if __name__ == '__main__':
     
     plt.ion()
-    matplotlib.use('Qt4Agg')
+    matplotlib.use('Qt5Agg')
     #plt.ioff()
     rospy.init_node('controller',anonymous=False)
     node = robot_controller()
