@@ -64,14 +64,14 @@ class robot_controller(object):
         # Joint impedance controller
         dof = 2
         self.joint_pd      = robotcontrollers.JointPD( dof )
-        self.joint_pd.kp   = np.array([  3.0, 3.0 ])
-        self.joint_pd.kd   = np.array([  1.0,  1.0 ])
+        self.joint_pd.kp   = np.array([  2.0, 2.0 ])
+        self.joint_pd.kd   = np.array([  0.5,  0.5 ])
         
         # Effector impedance controller
         self.eff_pd      = robotcontrollers.EndEffectorPD( self.sys )
         self.eff_pd.rbar = np.array([-0.4,+0.0])
-        self.eff_pd.kp   = np.array([ 25.0, 25.0 ])
-        self.eff_pd.kd   = np.array([ 5.0, 5.0 ])
+        self.eff_pd.kp   = np.array([ 20.0, 20.0 ])
+        self.eff_pd.kd   = np.array([ 2.0, 2.0 ])
         
 
         #################
@@ -182,8 +182,8 @@ class robot_controller(object):
                 self.controller_mode_name = 'joint velocity control'
                 
                 # Target velocity
-                self.motors_cmd_vel[0] = -self.user_ref[1] * 3.1415 * 2.0
-                self.motors_cmd_vel[1] = -self.user_ref[0] * 3.1415 * 1.0
+                self.motors_cmd_vel[0] = -self.user_ref[0] * 3.1415 * 2.0
+                self.motors_cmd_vel[1] = -self.user_ref[1] * 3.1415 * 1.0
                 
                 # Gravity compensation
                 u  = self.sys.g( self.q )
