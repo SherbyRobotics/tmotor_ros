@@ -1,0 +1,65 @@
+# Python-related ignores #
+###################
+*.py[cod]
+*.egg-info/
+*.egg
+*.pyc
+__pycache__/
+*$py.class
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+
+# Data etc #
+############################
+*.npy
+*.csv
+*.mat
+
+# Output files #
+############################
+output/
+*.html
+*.png
+*.gif
+
+# Editor Config #
+.vscode/
+.spyproject/
+.spyderproject/
+
+# OS Files #
+.DS_Store
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/pyro.iml
+.idea/vcs.xml
+.pytest_cache/v/cache/lastfailed
+.pytest_cache/v/cache/nodeids
+.idea/other.xml
+.idea/workspace.xml
+build/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
