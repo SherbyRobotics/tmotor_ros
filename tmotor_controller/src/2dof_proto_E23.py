@@ -28,7 +28,7 @@ class Proto2DoF_E23( manipulator.TwoLinkManipulator ):
         manipulator.Manipulator.__init__( self, dof , m , e)
         
         # Name
-        self.name = 'Proto2DoF E23'
+        self.name = 'Proto 2DoF E23'
         
         # params
         self.setparams()
@@ -77,6 +77,8 @@ if __name__ == "__main__":
     
     sys.x0[0] = 0.3
     sys.x0[1] = -0.3
+    
+    sys.ubar[0] = 0.5
     
     sys.compute_trajectory()
     
