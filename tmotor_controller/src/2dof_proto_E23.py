@@ -34,7 +34,7 @@ class Proto2DoF_E23( manipulator.TwoLinkManipulator ):
         self.setparams()
         
         # Graphic output
-        self.l_domain = 1.
+        self.l_domain = 0.7
                 
             
     #############################
