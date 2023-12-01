@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import rospy
 import numpy as np
 import time
@@ -29,8 +29,9 @@ class robot_controller(object):
         self.pub_cmd    = rospy.Publisher("joints_cmd", JointState , queue_size=1)
     
         # Control Timer
-        self.dt         = 0.01
+        self.dt         = 0.005
         self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
+        
         
         #################
         # Paramters
@@ -64,14 +65,14 @@ class robot_controller(object):
         # Joint impedance controller
         dof = 2
         self.joint_pd      = robotcontrollers.JointPD( dof )
-        self.joint_pd.kp   = np.array([  2.0, 2.0 ])
-        self.joint_pd.kd   = np.array([  0.5,  0.5 ])
+        self.joint_pd.kp   = np.array([  3.0, 3.0 ])
+        self.joint_pd.kd   = np.array([  1.0,  1.0 ])
         
         # Effector impedance controller
         self.eff_pd      = robotcontrollers.EndEffectorPD( self.sys )
         self.eff_pd.rbar = np.array([-0.4,+0.0])
-        self.eff_pd.kp   = np.array([ 20.0, 20.0 ])
-        self.eff_pd.kd   = np.array([ 2.0, 2.0 ])
+        self.eff_pd.kp   = np.array([ 25.0, 25.0 ])
+        self.eff_pd.kd   = np.array([ 5.0, 5.0 ])
         
 
         #################
@@ -120,12 +121,12 @@ class robot_controller(object):
         self.animator = self.sys.get_animator()
         self.sys.l_domain = 0.7
         #self.animator.show( self.q )
-        self.animator.show_plus( self.x , self.u, 0 )
+        self.animator.show_plus( self.x , self.u, 0.0 )
         self.animator.showfig.canvas.draw()
         plt.show(block=False)
         
         # Graphic output Timer
-        self.dt2        = 0.1
+        self.dt2        = 0.02
         self.timer2     = rospy.Timer( rospy.Duration( self.dt2 ), self.timed_graphic )
 
         
@@ -170,10 +171,10 @@ class robot_controller(object):
             if ( self.controller_mode == 1 ):
                 self.controller_mode_name = 'manual torque control'
                 
-                u = np.array([ self.user_ref[1] * 1.0 , self.user_ref[0] * 1.0   ])
+                u = np.array([ self.user_ref[0] * 1.0 , self.user_ref[1] * 1.0   ])
                 
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 
                 self.motors_cmd_mode = ['torque','torque']
             
@@ -182,13 +183,13 @@ class robot_controller(object):
                 self.controller_mode_name = 'joint velocity control'
                 
                 # Target velocity
-                self.motors_cmd_vel[0] = -self.user_ref[0] * 3.1415 * 2.0
-                self.motors_cmd_vel[1] = -self.user_ref[1] * 3.1415 * 1.0
+                self.motors_cmd_vel[0] = self.user_ref[1] * 3.1415 * 2.0
+                self.motors_cmd_vel[1] = self.user_ref[0] * 3.1415 * 1.0
                 
                 # Gravity compensation
                 u  = self.sys.g( self.q )
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 
                 # Integral action
                 self.motors_cmd_pos[0] = self.last_target_position[0] + self.motors_cmd_vel[0] * dt
@@ -208,8 +209,8 @@ class robot_controller(object):
                 r  = np.array([0.0,0.0]) 
                 u  = self.sys.g( self.q ) * ( 1.0 - user[0] )
                 
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 self.motors_cmd_mode = ['torque','torque']
                 
                 
@@ -224,13 +225,13 @@ class robot_controller(object):
                 dq = np.dot( np.linalg.inv( J ) , dr )
                 
                 # Target velocity
-                self.motors_cmd_vel[0] = -dq[1]
-                self.motors_cmd_vel[1] = -dq[0]
+                self.motors_cmd_vel[0] = dq[1]
+                self.motors_cmd_vel[1] = dq[0]
                 
                 # Gravity compensation
                 u  = self.sys.g( self.q )
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 
                 # Integral action
                 self.motors_cmd_pos[0] = self.last_target_position[0] + self.motors_cmd_vel[0] * dt
@@ -253,8 +254,8 @@ class robot_controller(object):
                 #print('state:',x)
                 #print('cmd:',u)
                 
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 self.motors_cmd_mode = ['torque','torque']
             
             ####################################################
@@ -282,13 +283,13 @@ class robot_controller(object):
                 dq = np.dot( np.linalg.inv( J ) , dr )
                 
                 # Target velocity
-                self.motors_cmd_vel[0] = -dq[1]
-                self.motors_cmd_vel[1] = -dq[0]
+                self.motors_cmd_vel[0] = dq[1]
+                self.motors_cmd_vel[1] = dq[0]
                 
                 # Gravity compensation
                 u  = self.sys.g( self.q )
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 
                 # Integral action
                 self.motors_cmd_pos[0] = self.last_target_position[0] + self.motors_cmd_vel[0] * dt
@@ -325,10 +326,10 @@ class robot_controller(object):
                 
                 self.controller_mode_name = 'joint PD control (t-motor)'
                 
-                self.motors_cmd_pos[0] = -self.user_ref[1] * 3.1415 * 0.5
-                self.motors_cmd_pos[1] = -self.user_ref[0] * 3.1415 * 0.25
-                #self.motors_cmd_mode   = ['position','position']
-                self.motors_cmd_mode = ['disable','disable']
+                self.motors_cmd_pos[0] = self.user_ref[1] * 3.1415 * 0.5
+                self.motors_cmd_pos[1] = self.user_ref[0] * 3.1415 * 0.25
+                self.motors_cmd_mode   = ['position','position']
+                #self.motors_cmd_mode = ['disable','disable']
                 
             ####################################################    
             elif  ( self.controller_mode == 11 ):
@@ -340,8 +341,8 @@ class robot_controller(object):
                 r  = np.array([-0.4,0.0]) + user * 0.5
                 u  = self.eff_pd.c( x, r, t)
                 
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 self.motors_cmd_mode = ['torque','torque']
             
             ####################################################
@@ -354,8 +355,8 @@ class robot_controller(object):
                 r  = np.array([0.0,0.0]) + user * 0.5
                 u  = self.joint_pd.c( x, r, t)
                 
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 self.motors_cmd_mode = ['torque','torque']
             
             ####################################################
@@ -368,8 +369,8 @@ class robot_controller(object):
                 r  = np.array([-0.4,0.0]) + user * 0.5
                 u  = self.eff_pd.c( x, r, t) + self.sys.g( self.q )
                 
-                self.motors_cmd_tor[0] = -u[1]
-                self.motors_cmd_tor[1] = -u[0]
+                self.motors_cmd_tor[0] = u[1]
+                self.motors_cmd_tor[1] = u[0]
                 self.motors_cmd_mode = ['torque','torque']
             
         self.pubish_joints_cmd_msg()
@@ -490,19 +491,20 @@ class robot_controller(object):
         self.x[3] = msg.velocity[1]
         """
         
-        self.q  = np.array([ -msg.position[0] - 3.1415 , -msg.position[1] ])
-        self.dq = np.array([ -msg.velocity[0] , -msg.velocity[1] ])
+        self.q  = np.array([ msg.position[1] - 3.1415 , msg.position[0] ])
+        self.dq = np.array([ msg.velocity[1] , msg.velocity[0] ])
         
         self.x  = self.sys.q2x( self.q , self.dq )
-        self.u  = np.array([ -msg.effort[0] , -msg.effort[1] ])
+        self.u  = np.array([ msg.effort[1] , msg.effort[0] ])
         #self.timed_controller( None )
         
         
     #######################################
     def timed_graphic(self, timer):
         
-        print('Control mode = ' , self.controller_mode_name, '  q=', self.q , '  u=', self.u)
+        print('Control mode = ' , self.controller_mode_name, '  q=', self.q)
         self.animator.show_plus_update( self.x, self.u, 0.0 )
+        plt.pause(0.01)
 
 
 
