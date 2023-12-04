@@ -4,6 +4,7 @@ import numpy as np
 import time
 import matplotlib
 import matplotlib.pyplot as plt
+from threading import Thread
 
 from sensor_msgs.msg import Joy
 from sensor_msgs.msg import JointState
@@ -29,8 +30,8 @@ class robot_controller(object):
         self.pub_cmd    = rospy.Publisher("joints_cmd", JointState , queue_size=1)
     
         # Control Timer
-        self.dt         = 0.005
-        self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
+        #self.dt         = 0.005
+        #self.timer      = rospy.Timer( rospy.Duration( self.dt ), self.timed_controller )
         
         
         #################
@@ -126,12 +127,15 @@ class robot_controller(object):
         plt.show(block=False)
         
         # Graphic output Timer
-        self.dt2        = 0.02
-        self.timer2     = rospy.Timer( rospy.Duration( self.dt2 ), self.timed_graphic )
+        #self.dt2        = 0.02
+        #self.timer2     = rospy.Timer( rospy.Duration( self.dt2 ), self.timed_graphic )
+        
+        
 
         
     #######################################
-    def timed_controller(self, timer):
+    def timed_controller(self):
+#    def timed_controller(self, timer):
         
         ################################
         # Copmuting time values
@@ -500,23 +504,53 @@ class robot_controller(object):
         
         
     #######################################
-    def timed_graphic(self, timer):
+#    def timed_graphic(self, timer):
+#        
+#        print('Control mode = ' , self.controller_mode_name, '  q=', self.q)
+#        self.animator.show_plus_update( self.x, self.u, 0.0 )
+#        plt.pause(0.01)
+        
+    def timed_graphic(self):
         
         print('Control mode = ' , self.controller_mode_name, '  q=', self.q)
         self.animator.show_plus_update( self.x, self.u, 0.0 )
         plt.pause(0.01)
+        
 
+def controller_thread(node):
+	rate_controller = rospy.Rate(100)  # Adjust the rate for your controller
+	
+
+	while not rospy.is_shutdown():
+		node.timed_controller()
+		rate_controller.sleep()
 
 
 #########################################
 
 if __name__ == '__main__':
     
-    plt.ion()
-    matplotlib.use('Qt5Agg')
-    #plt.ioff()
-    rospy.init_node('controller',anonymous=False)
-    node = robot_controller()
+	plt.ion()
+	matplotlib.use('TkAgg')
+	#plt.ioff()
+	rospy.init_node('controller',anonymous=False)
+	node = robot_controller()
+
+	#rate_controller = rospy.Rate(100)  # Adjust the rate for your controller
+	controller_thread = Thread(target=controller_thread, args=(node,))	
     
-    plt.show( block = True )
-    rospy.spin()
+	controller_thread.start()
+
+	# Set the graphic update rate (e.g., every 0.1 seconds)
+	graphic_update_period = 0.03
+	graphic_last_update = time.time()
+
+	while not rospy.is_shutdown():
+
+		# Check if it's time to perform graphic updates
+		if time.time() - graphic_last_update >= graphic_update_period:
+			node.timed_graphic()
+			graphic_last_update = time.time()
+        
+	
+	controller_thread.join()
